@@ -32,13 +32,11 @@ const envSchema = z.object({
   JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(60 * 60 * 24 * 7),
   OTP_TTL_MINUTES: z.coerce.number().int().positive().default(10),
 
-  // --- SMTP (optional in dev: if unset, OTPs are logged to the console) ---
-  // Empty strings in .env are treated as unset so blank vars don't fail parsing.
-  SMTP_HOST: z.preprocess(emptyToUndefined, z.string().optional()),
-  SMTP_PORT: z.preprocess(emptyToUndefined, z.coerce.number().int().positive().optional()),
-  SMTP_USER: z.preprocess(emptyToUndefined, z.string().optional()),
-  SMTP_PASS: z.preprocess(emptyToUndefined, z.string().optional()),
-  SMTP_FROM: z.preprocess(emptyToUndefined, z.string().optional()),
+  // --- Email (Resend HTTPS API) ---
+  // If unset (local dev), OTP codes are logged to the console instead.
+  RESEND_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
+  // From address for outgoing mail (defaults to Resend's onboarding sender).
+  MAIL_FROM: z.preprocess(emptyToUndefined, z.string().optional()),
 });
 
 const parsed = envSchema.safeParse(process.env);

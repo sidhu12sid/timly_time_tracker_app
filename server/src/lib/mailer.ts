@@ -1,46 +1,39 @@
-import nodemailer, { type Transporter } from "nodemailer";
 import { env } from "../env.js";
-
-let transporter: Transporter | null = null;
-
-function getTransporter(): Transporter | null {
-  if (transporter) return transporter;
-  if (!env.SMTP_HOST || !env.SMTP_PORT) return null;
-
-  const base = {
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_PORT === 465, // implicit TLS on 465, STARTTLS otherwise
-  };
-  transporter =
-    env.SMTP_USER && env.SMTP_PASS
-      ? nodemailer.createTransport({ ...base, auth: { user: env.SMTP_USER, pass: env.SMTP_PASS } })
-      : nodemailer.createTransport(base);
-
-  return transporter;
-}
 
 export type OtpPurpose = "verify" | "reset";
 
-export async function sendOtpEmail(to: string, otp: string, purpose: OtpPurpose): Promise<void> {
+const DEFAULT_FROM = "Time Tracker <onboarding@resend.dev>";
+
+function buildMessage(otp: string, purpose: OtpPurpose) {
   const subject =
     purpose === "verify"
       ? "Verify your Time Tracker account"
       : "Reset your Time Tracker password";
   const action = purpose === "verify" ? "verification" : "password reset";
   const text = `Your ${action} code is ${otp}.\nIt expires in ${env.OTP_TTL_MINUTES} minutes.`;
+  return { subject, text };
+}
 
-  const t = getTransporter();
-  if (!t) {
-    // Dev fallback: no SMTP configured, so log the code to keep the flow testable.
-    console.warn(`[mailer] SMTP not configured — OTP for ${to}: ${otp}`);
+// Send mail via Resend's HTTPS API (works on hosts that block SMTP ports).
+// If no API key is configured (local dev), the OTP is logged to the console.
+export async function sendOtpEmail(to: string, otp: string, purpose: OtpPurpose): Promise<void> {
+  const { subject, text } = buildMessage(otp, purpose);
+
+  if (!env.RESEND_API_KEY) {
+    console.warn(`[mailer] RESEND_API_KEY not set — OTP for ${to}: ${otp}`);
     return;
   }
 
-  await t.sendMail({
-    from: env.SMTP_FROM ?? env.SMTP_USER ?? "no-reply@timetracker.local",
-    to,
-    subject,
-    text,
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from: env.MAIL_FROM ?? DEFAULT_FROM, to, subject, text }),
   });
+
+  if (!res.ok) {
+    throw new Error(`Resend error ${res.status}: ${await res.text()}`);
+  }
 }
