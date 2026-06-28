@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import { currentUser } from "./middleware/currentUser.js";
+import { env } from "./env.js";
+import { requireAuth } from "./middleware/requireAuth.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { authRouter } from "./controllers/auth.js";
 import { currenciesRouter } from "./controllers/currencies.js";
@@ -12,7 +13,8 @@ import { dashboardRouter } from "./controllers/dashboard.js";
 export function createApp() {
   const app = express();
 
-  app.use(cors());
+  // Restrict CORS to the client origin in production; allow all in dev.
+  app.use(cors(env.CLIENT_ORIGIN ? { origin: env.CLIENT_ORIGIN } : {}));
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
@@ -24,8 +26,8 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/currencies", currenciesRouter);
 
-  // SCAFFOLD auth shim — see middleware/currentUser.ts.
-  app.use("/api", currentUser);
+  // Everything below requires a valid JWT (sets res.locals.userId).
+  app.use("/api", requireAuth);
   app.use("/api/clients", clientsRouter);
   app.use("/api/projects", projectsRouter);
   app.use("/api/time-entries", timeEntriesRouter);

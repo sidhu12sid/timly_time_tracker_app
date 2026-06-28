@@ -23,6 +23,10 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
 
+  // Allowed browser origin for CORS in production (e.g. https://app.vercel.app).
+  // Unset in dev = allow all origins.
+  CLIENT_ORIGIN: z.preprocess(emptyToUndefined, z.string().url().optional()),
+
   // --- Auth ---
   JWT_SECRET: z.string().min(1).default("dev-insecure-secret-change-me"),
   JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(60 * 60 * 24 * 7),

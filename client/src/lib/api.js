@@ -1,4 +1,4 @@
-import { getToken } from "./auth.js";
+import { clearSession, getToken } from "./auth.js";
 
 // Thin fetch wrapper around the REST API.
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
@@ -12,6 +12,13 @@ async function request(path, options = {}) {
     },
     ...options,
   });
+
+  // Session expired/invalid: drop it and bounce to login (only when we had a
+  // token — a failed login itself also returns 401 and should show its error).
+  if (res.status === 401 && token) {
+    clearSession();
+    window.location.href = "/login";
+  }
 
   if (!res.ok) {
     let detail;
