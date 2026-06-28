@@ -1,0 +1,112 @@
+// Time Tracker data model.
+// Core rule: time_entries.hourly_rate is SNAPSHOTTED at creation. Past entries
+// must never re-price when a project/client/user rate later changes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  // Bcrypt hash — never the plaintext password.
+  password  String
+  // Short-lived one-time code for email verification / password reset.
+  otp          String?   @map("otp")
+  otpExpiresAt DateTime? @map("otp_expires_at")
+  // False until the user confirms their email via OTP.
+  isVerified   Boolean   @default(false) @map("is_verified")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  clients     Client[]
+  timeEntries TimeEntry[]
+
+  @@map("users")
+}
+
+model Client {
+  id   String @id @default(uuid())
+  name String
+  // The rate source for this client's entries (snapshotted onto each entry).
+  defaultHourlyRate Decimal? @map("default_hourly_rate") @db.Decimal(10, 2)
+
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  projects Project[]
+
+  @@index([userId])
+  @@map("clients")
+}
+
+model Project {
+  id   String @id @default(uuid())
+  name String
+  // Prefill default for new entries' is_billable ONLY — not the source of truth.
+  isBillableDefault Boolean @default(true) @map("is_billable_default")
+
+  clientId  String   @map("client_id")
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  timeEntries TimeEntry[]
+
+  @@index([clientId])
+  @@map("projects")
+}
+
+model TimeEntry {
+  id          String  @id @default(uuid())
+  description String  @default("")
+
+  startTime DateTime  @map("start_time")
+  // Set only when the timer is fully stopped.
+  endTime   DateTime? @map("end_time")
+  // Final billable total, written on stop (rounded from accumulatedSeconds).
+  // Null until stopped — the dashboard only counts entries that have it.
+  durationMinutes Int? @map("duration_minutes")
+
+  // Pause/resume timing. "running" | "paused" | "stopped".
+  status String @default("running")
+  // Time banked from completed run segments (excludes the current live one).
+  accumulatedSeconds Int @default(0) @map("accumulated_seconds")
+  // When the current running segment began; null while paused/stopped.
+  segmentStartedAt DateTime? @map("segment_started_at")
+
+  // Snapshotted at creation from the client's default rate. Nullable when no
+  // rate resolves (handle this — never let it become NaN downstream).
+  hourlyRate Decimal? @map("hourly_rate") @db.Decimal(10, 2)
+  // Source of truth for billability, copied from project default at creation
+  // but independently editable thereafter.
+  isBillable Boolean @default(true) @map("is_billable")
+
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String   @map("project_id")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([startTime])
+  @@map("time_entries")
+}
+
+// Reference table of ISO 4217 currencies. Seeded from prisma/seed.ts.
+model Currency {
+  code String @id // ISO 4217 code, e.g. "USD"
+  name String //     e.g. "US Dollar"
+
+  @@map("currencies")
+}

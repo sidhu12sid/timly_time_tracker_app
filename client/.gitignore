@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Vite build output & cache
+dist/
+dist-ssr/
+.vite/
+
+# Env (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.swp

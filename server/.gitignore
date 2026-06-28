@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Env (keep .env.example tracked; the local .env lives here)
+.env
+.env.local
+.env.*.local
+
+# Prisma
+# Generated client lives in node_modules/.prisma (already ignored).
+# Migrations are SOURCE — keep them tracked, do NOT ignore prisma/migrations.
+prisma/*.db
+prisma/*.db-journal
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp

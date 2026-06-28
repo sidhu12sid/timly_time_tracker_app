@@ -1,0 +1,24 @@
+# Production overrides. Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+# Builds the multi-stage runtime images instead of the dev (hot-reload) ones,
+# and drops the host source bind-mounts.
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+    # No source bind-mounts in prod — the image is self-contained.
+    volumes: []
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        # Baked into the static bundle at build time.
+        VITE_API_URL: ${VITE_API_URL}
+    ports:
+      - "80:80"
+    volumes: []
