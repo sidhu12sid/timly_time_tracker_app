@@ -1,3 +1,9 @@
+import dns from "node:dns";
+// Many container hosts (Render, etc.) have no outbound IPv6 route. Node may
+// resolve a host's IPv6 (AAAA) record first and fail with ENETUNREACH — this
+// bit SMTP (smtp.gmail.com). Prefer IPv4 so we connect to a reachable address.
+dns.setDefaultResultOrder("ipv4first");
+
 import { env } from "./env.js";
 import { createApp } from "./app.js";
 import { prisma } from "./lib/prisma.js";
