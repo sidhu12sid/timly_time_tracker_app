@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 
 export function listClients(userId: string) {
@@ -9,25 +8,14 @@ export function listClients(userId: string) {
   });
 }
 
-export function createClient(userId: string, data: {
-  name: string;
-  defaultHourlyRate: Prisma.Decimal | null;
-}) {
+export function createClient(userId: string, data: { name: string }) {
   return prisma.client.create({
-    data: {
-      userId,
-      name: data.name,
-      defaultHourlyRate: data.defaultHourlyRate,
-    },
+    data: { userId, name: data.name },
   });
 }
 
 // Scoped to the owner. Returns the updated row or null if not found / not owned.
-export async function updateClient(
-  userId: string,
-  id: string,
-  data: { name: string; defaultHourlyRate: Prisma.Decimal | null },
-) {
+export async function updateClient(userId: string, id: string, data: { name: string }) {
   const { count } = await prisma.client.updateMany({ where: { id, userId }, data });
   if (count === 0) return null;
   return prisma.client.findUnique({ where: { id } });

@@ -7,7 +7,6 @@ const money = z.number().nonnegative().nullable();
 
 export const createClientSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  defaultHourlyRate: money.optional(),
 });
 
 // Same shape as create — used when editing a client.
@@ -16,12 +15,14 @@ export const updateClientSchema = createClientSchema;
 export const createProjectSchema = z.object({
   clientId: z.string().uuid(),
   name: z.string().min(1, "Name is required"),
+  hourlyRate: money.optional(),
   isBillableDefault: z.boolean().optional(),
 });
 
 // Editing a project doesn't change its client.
 export const updateProjectSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  hourlyRate: money.optional(),
   isBillableDefault: z.boolean().optional(),
 });
 

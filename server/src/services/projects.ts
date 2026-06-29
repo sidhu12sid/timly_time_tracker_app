@@ -1,4 +1,5 @@
 import * as projectsData from "../data/projects.js";
+import { toDecimal } from "./rates.js";
 import { HttpError } from "../lib/httpError.js";
 import type { CreateProjectInput, UpdateProjectInput } from "../schemas/index.js";
 
@@ -10,6 +11,7 @@ export function createProject(input: CreateProjectInput) {
   return projectsData.createProject({
     clientId: input.clientId,
     name: input.name,
+    hourlyRate: toDecimal(input.hourlyRate),
     isBillableDefault: input.isBillableDefault ?? true,
   });
 }
@@ -17,6 +19,7 @@ export function createProject(input: CreateProjectInput) {
 export async function updateProject(userId: string, id: string, input: UpdateProjectInput) {
   const updated = await projectsData.updateProject(userId, id, {
     name: input.name,
+    hourlyRate: toDecimal(input.hourlyRate),
     isBillableDefault: input.isBillableDefault ?? true,
   });
   if (!updated) throw new HttpError(404, "Project not found");

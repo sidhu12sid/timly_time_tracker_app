@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 
 export function listProjects(userId: string) {
@@ -8,18 +9,17 @@ export function listProjects(userId: string) {
   });
 }
 
-// Fetch a project with its client so the rate (client default) can be resolved
-// in the service layer.
+// Fetch a project (scoped to the owner) so its rate can be snapshotted.
 export function getProjectForRateResolution(projectId: string, userId: string) {
   return prisma.project.findFirst({
     where: { id: projectId, client: { userId } },
-    include: { client: true },
   });
 }
 
 export function createProject(data: {
   clientId: string;
   name: string;
+  hourlyRate: Prisma.Decimal | null;
   isBillableDefault: boolean;
 }) {
   return prisma.project.create({ data });
@@ -30,7 +30,7 @@ export function createProject(data: {
 export async function updateProject(
   userId: string,
   id: string,
-  data: { name: string; isBillableDefault: boolean },
+  data: { name: string; hourlyRate: Prisma.Decimal | null; isBillableDefault: boolean },
 ) {
   const { count } = await prisma.project.updateMany({
     where: { id, client: { userId } },

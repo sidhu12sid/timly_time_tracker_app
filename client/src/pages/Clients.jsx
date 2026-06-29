@@ -2,13 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api.js";
 import { createClientSchema } from "../schemas.js";
-import { formatMoney } from "../lib/format.js";
-
-const EMPTY = { name: "", rate: "" };
 
 export default function Clients() {
   const qc = useQueryClient();
-  const [form, setForm] = useState(EMPTY);
+  const [name, setName] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [formError, setFormError] = useState(null);
 
@@ -23,7 +20,7 @@ export default function Clients() {
   };
 
   function resetForm() {
-    setForm(EMPTY);
+    setName("");
     setEditingId(null);
     setFormError(null);
   }
@@ -48,10 +45,7 @@ export default function Clients() {
 
   function startEdit(client) {
     setEditingId(client.id);
-    setForm({
-      name: client.name,
-      rate: client.defaultHourlyRate != null ? String(client.defaultHourlyRate) : "",
-    });
+    setName(client.name);
     setFormError(null);
   }
 
@@ -65,10 +59,7 @@ export default function Clients() {
   function handleSubmit(e) {
     e.preventDefault();
     setFormError(null);
-    const parsed = createClientSchema.safeParse({
-      name: form.name,
-      defaultHourlyRate: form.rate === "" ? null : Number(form.rate),
-    });
+    const parsed = createClientSchema.safeParse({ name });
     if (!parsed.success) {
       setFormError(parsed.error.issues[0]?.message ?? "Invalid input");
       return;
@@ -84,17 +75,8 @@ export default function Clients() {
           <input
             className="flex-1 rounded-md border border-slate-300 px-3 py-2"
             placeholder="Client name"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          />
-          <input
-            className="w-40 rounded-md border border-slate-300 px-3 py-2"
-            placeholder="Default rate"
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.rate}
-            onChange={(e) => setForm((f) => ({ ...f, rate: e.target.value }))}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
           <button
             type="submit"
@@ -129,7 +111,7 @@ export default function Clients() {
             <thead className="border-b border-slate-200 text-left text-slate-500">
               <tr>
                 <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Default rate</th>
+                <th className="px-4 py-2">Projects</th>
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
@@ -137,11 +119,7 @@ export default function Clients() {
               {clients.map((c) => (
                 <tr key={c.id}>
                   <td className="px-4 py-2 font-medium">{c.name}</td>
-                  <td className="px-4 py-2">
-                    {c.defaultHourlyRate != null
-                      ? `${formatMoney(Number(c.defaultHourlyRate))}/h`
-                      : "No default rate"}
-                  </td>
+                  <td className="px-4 py-2 text-slate-500">{c.projects?.length ?? 0}</td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
                     <button
                       onClick={() => startEdit(c)}

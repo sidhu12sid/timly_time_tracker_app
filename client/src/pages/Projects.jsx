@@ -4,7 +4,7 @@ import { api } from "../lib/api.js";
 import { createProjectSchema, updateProjectSchema } from "../schemas.js";
 import { formatMoney } from "../lib/format.js";
 
-const EMPTY = { clientId: "", name: "", isBillableDefault: true };
+const EMPTY = { clientId: "", name: "", hourlyRate: "", isBillableDefault: true };
 
 export default function Projects() {
   const qc = useQueryClient();
@@ -53,6 +53,7 @@ export default function Projects() {
     setForm({
       clientId: project.clientId,
       name: project.name,
+      hourlyRate: project.hourlyRate != null ? String(project.hourlyRate) : "",
       isBillableDefault: project.isBillableDefault,
     });
     setFormError(null);
@@ -68,12 +69,18 @@ export default function Projects() {
   function handleSubmit(e) {
     e.preventDefault();
     setFormError(null);
-    // Editing keeps the same client; only name + billable default change.
+    // Editing keeps the same client; rate / name / billable default can change.
+    const rate = form.hourlyRate === "" ? null : Number(form.hourlyRate);
     const parsed = editingId
-      ? updateProjectSchema.safeParse({ name: form.name, isBillableDefault: form.isBillableDefault })
+      ? updateProjectSchema.safeParse({
+          name: form.name,
+          hourlyRate: rate,
+          isBillableDefault: form.isBillableDefault,
+        })
       : createProjectSchema.safeParse({
           clientId: form.clientId,
           name: form.name,
+          hourlyRate: rate,
           isBillableDefault: form.isBillableDefault,
         });
     if (!parsed.success) {
@@ -107,6 +114,15 @@ export default function Projects() {
             value={form.name}
             onChange={update("name")}
           />
+          <input
+            className="w-40 rounded-md border border-slate-300 px-3 py-2"
+            placeholder="Hourly rate"
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.hourlyRate}
+            onChange={update("hourlyRate")}
+          />
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <input type="checkbox" checked={form.isBillableDefault} onChange={update("isBillableDefault")} />
             Billable by default
@@ -125,7 +141,7 @@ export default function Projects() {
           )}
         </div>
         <p className="mt-2 text-xs text-slate-400">
-          The billing rate comes from the project's client.
+          Set the project's hourly rate used to bill its time entries.
         </p>
         {formError && <p className="mt-2 text-sm text-red-600">{formError}</p>}
         {saveMutation.isError && (
@@ -144,7 +160,7 @@ export default function Projects() {
               <tr>
                 <th className="px-4 py-2">Project</th>
                 <th className="px-4 py-2">Client</th>
-                <th className="px-4 py-2">Rate (from client)</th>
+                <th className="px-4 py-2">Rate</th>
                 <th className="px-4 py-2">Billable default</th>
                 <th className="px-4 py-2"></th>
               </tr>
@@ -155,9 +171,7 @@ export default function Projects() {
                   <td className="px-4 py-2 font-medium">{p.name}</td>
                   <td className="px-4 py-2">{p.client?.name ?? "—"}</td>
                   <td className="px-4 py-2">
-                    {p.client?.defaultHourlyRate != null
-                      ? `${formatMoney(Number(p.client.defaultHourlyRate))}/h`
-                      : "—"}
+                    {p.hourlyRate != null ? `${formatMoney(Number(p.hourlyRate))}/h` : "—"}
                   </td>
                   <td className="px-4 py-2">{p.isBillableDefault ? "Yes" : "No"}</td>
                   <td className="px-4 py-2 text-right">

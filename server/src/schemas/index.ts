@@ -7,22 +7,22 @@ const money = z.number().nonnegative().nullable();
 
 export const createClientSchema = z.object({
   name: z.string().min(1),
-  defaultHourlyRate: money.optional(),
 });
 
 export const updateClientSchema = z.object({
   name: z.string().min(1),
-  defaultHourlyRate: money.optional(),
 });
 
 export const createProjectSchema = z.object({
   clientId: z.string().uuid(),
   name: z.string().min(1),
+  hourlyRate: money.optional(),
   isBillableDefault: z.boolean().optional(),
 });
 
 export const updateProjectSchema = z.object({
   name: z.string().min(1),
+  hourlyRate: money.optional(),
   isBillableDefault: z.boolean().optional(),
 });
 

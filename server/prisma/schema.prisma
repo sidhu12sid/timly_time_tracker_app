@@ -34,9 +34,6 @@ model User {
 model Client {
   id   String @id @default(uuid())
   name String
-  // The rate source for this client's entries (snapshotted onto each entry).
-  defaultHourlyRate Decimal? @map("default_hourly_rate") @db.Decimal(10, 2)
-
   userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now()) @map("created_at")
@@ -51,6 +48,9 @@ model Client {
 model Project {
   id   String @id @default(uuid())
   name String
+  // Rate source for this project's entries (snapshotted onto each entry).
+  // Falls back to the client's default when null.
+  hourlyRate Decimal? @map("hourly_rate") @db.Decimal(10, 2)
   // Prefill default for new entries' is_billable ONLY — not the source of truth.
   isBillableDefault Boolean @default(true) @map("is_billable_default")
 

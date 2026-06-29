@@ -69,10 +69,10 @@ watching across the Windows/WSL boundary is slow and breaks HMR.
 ## Data model (core rules — do not deviate)
 - Entities: users, clients, projects, time_entries.
 - time_entries.hourly_rate is SNAPSHOTTED at entry creation. Resolve the
-  rate once from the client's default (client.default_hourly_rate) and store
-  it on the entry. Projects and users do NOT carry a rate. Never re-derive an
-  existing entry's value from the client's current rate — past entries must
-  not re-price when a rate changes.
+  rate once from the project (project.hourly_rate) and store it on the entry.
+  Clients and users do NOT carry a rate. Never re-derive an existing entry's
+  value from the project's current rate — past entries must not re-price when
+  a rate changes.
 - is_billable lives on time_entry. projects.is_billable_default is only
   the prefill value when creating an entry.
 - A running timer is a time_entry with end_time = null. duration is

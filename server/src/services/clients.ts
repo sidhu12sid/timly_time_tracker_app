@@ -1,5 +1,4 @@
 import * as clientsData from "../data/clients.js";
-import { toDecimal } from "./rates.js";
 import { HttpError } from "../lib/httpError.js";
 import type { CreateClientInput, UpdateClientInput } from "../schemas/index.js";
 
@@ -8,17 +7,11 @@ export function listClients(userId: string) {
 }
 
 export function createClient(userId: string, input: CreateClientInput) {
-  return clientsData.createClient(userId, {
-    name: input.name,
-    defaultHourlyRate: toDecimal(input.defaultHourlyRate),
-  });
+  return clientsData.createClient(userId, { name: input.name });
 }
 
 export async function updateClient(userId: string, id: string, input: UpdateClientInput) {
-  const updated = await clientsData.updateClient(userId, id, {
-    name: input.name,
-    defaultHourlyRate: toDecimal(input.defaultHourlyRate),
-  });
+  const updated = await clientsData.updateClient(userId, id, { name: input.name });
   if (!updated) throw new HttpError(404, "Client not found");
   return updated;
 }

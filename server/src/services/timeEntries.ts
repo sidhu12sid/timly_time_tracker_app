@@ -18,8 +18,8 @@ export async function createTimeEntry(userId: string, input: CreateTimeEntryInpu
     throw new HttpError(404, "Project not found");
   }
 
-  // Snapshot the rate once, now (from the client's default). Never recomputed.
-  const hourlyRate = resolveHourlyRate(project.client);
+  // Snapshot the rate once, now (from the project). Never recomputed.
+  const hourlyRate = resolveHourlyRate(project);
   const isBillable = input.isBillable ?? project.isBillableDefault;
 
   // Logging an already-finished entry (endTime provided) -> stored as stopped.
